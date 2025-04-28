@@ -1,0 +1,110 @@
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local touchedPlayers = {}
+local UIS = game:GetService("UserInputService")
+
+local function sendCommand(command)
+    local args = {
+        [1] = command
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("HDAdminHDClient")
+        :WaitForChild("Signals"):WaitForChild("RequestCommandSilent")
+        :InvokeServer(unpack(args))
+end
+
+local function evaporatePlayer(targetPlayer)
+    sendCommand(";fire " .. targetPlayer.Name)
+    task.wait(0.1)
+    sendCommand(";paint " .. targetPlayer.Name .. " red")
+    task.wait(0.1)
+    sendCommand(";title " .. targetPlayer.Name.."c00lkidd is here")
+    task.wait(0.1)
+    sendCommand(";invisible " .. targetPlayer.Name)
+    task.wait(0.1)
+    sendCommand(";fling " .. targetPlayer.Name)
+end
+
+-- Setup outfit and title
+local function setupSelf()
+    local commands = {
+        ";paint me red",
+        ";shirt me 16012481458",
+        ";titler me c00lkidd",
+        ";fire me"
+    }
+    for _, command in ipairs(commands) do
+        sendCommand(command)
+        task.wait(0.2)
+    end
+end
+
+-- Touch detection
+local function setupTouchDetection(character)
+    for _, part in ipairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.Touched:Connect(function(hit)
+                local targetChar = hit:FindFirstAncestorWhichIsA("Model")
+                if targetChar and targetChar ~= character and targetChar:FindFirstChild("Humanoid") then
+                    local targetPlayer = game.Players:GetPlayerFromCharacter(targetChar)
+                    if targetPlayer and targetPlayer ~= player then
+                        if not touchedPlayers[targetPlayer.Name] then
+                            touchedPlayers[targetPlayer.Name] = true
+                            evaporatePlayer(targetPlayer)
+
+                            task.delay(3, function()
+                                touchedPlayers[targetPlayer.Name] = nil
+                            end)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end
+
+player.CharacterAdded:Connect(function(character)
+    character:WaitForChild("HumanoidRootPart")
+    setupSelf()
+    setupTouchDetection(character)
+end)
+
+-- Run setup immediately if already spawned
+if player.Character then
+    setupSelf()
+    setupTouchDetection(player.Character)
+end
+
+-- Tap detection for mobile
+UIS.TouchTap:Connect(function(touchPositions, isProcessed)
+    if isProcessed then return end
+
+    if #touchPositions > 0 then
+        local screenPoint = touchPositions[1]
+        local unitRay = camera:ScreenPointToRay(screenPoint.X, screenPoint.Y)
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterDescendantsInstances = {player.Character}
+        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+        local raycastResult = workspace:Raycast(unitRay.Origin, unitRay.Direction * 1000, raycastParams)
+
+        if raycastResult then
+            local hitPart = raycastResult.Instance
+            if hitPart then
+                local character = hitPart:FindFirstAncestorWhichIsA("Model")
+                if character and character:FindFirstChild("Humanoid") then
+                    local targetPlayer = game.Players:GetPlayerFromCharacter(character)
+                    if targetPlayer and targetPlayer ~= player then
+                        if not touchedPlayers[targetPlayer.Name] then
+                            touchedPlayers[targetPlayer.Name] = true
+                            evaporatePlayer(targetPlayer)
+
+                            task.delay(3, function()
+                                touchedPlayers[targetPlayer.Name] = nil
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
