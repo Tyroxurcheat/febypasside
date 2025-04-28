@@ -13,24 +13,14 @@ local function sendCommand(command)
 end
 
 local function evaporatePlayer(targetPlayer)
-    sendCommand(";fire " .. targetPlayer.Name)
-    task.wait(0.1)
-    sendCommand(";paint " .. targetPlayer.Name .. " red")
-    task.wait(0.1)
-    sendCommand(";title " .. targetPlayer.Name.."c00lkidd is here")
-    task.wait(0.1)
-    sendCommand(";invisible " .. targetPlayer.Name)
-    task.wait(0.1)
-    sendCommand(";fling " .. targetPlayer.Name)
+    sendCommand(";paint " .. targetPlayer.Name "white")
 end
 
 -- Setup outfit and title
 local function setupSelf()
     local commands = {
-        ";paint me red",
-        ";shirt me 16012481458",
-        ";titler me c00lkidd",
-        ";fire me"
+        ";paint me white",
+        ";h SOMEONE GOT INFECTED"
     }
     for _, command in ipairs(commands) do
         sendCommand(command)
